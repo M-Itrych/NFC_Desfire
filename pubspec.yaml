@@ -1,0 +1,24 @@
+name: roger_nfc_services
+description: "Rogger NFC Services is a Flutter package that provides a set of NFC-related functionalities, including reading and writing NFC tags, handling NDEF messages, and managing NFC sessions."
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.7.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_nfc_kit: ^3.3.1
+  convert: ^3.0.1
+  encrypt: ^5.0.1
+  pointycastle: ^3.9.1
+  shared_preferences: ^2.2.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
