@@ -220,39 +220,8 @@ class _NfcReaderPageState extends State<NfcReaderPage> {
         // Convert to ASCII with byte range
         result = _conversionServices.toASCIIString(_rawOutput, fbp, lbp);
       } else {
-        // For HEX, extract the byte range from raw hex data with space formatting
-        final totalBytes = _rawOutput.length ~/ 2;
-        final maxIndex = totalBytes - 1;
-        
-        if (fbp > maxIndex || lbp > maxIndex) {
-          setState(() {
-            _decodedOutput = 'Błąd: FBP ($fbp) lub LBP ($lbp) przekracza dostępne bajty ($maxIndex)';
-          });
-          return;
-        }
-        
-        String hexResult;
-        if (fbp > lbp) {
-          // Reverse order for HEX
-          final hexPairs = <String>[];
-          for (int i = fbp; i >= lbp; i--) {
-            final startPos = i * 2;
-            hexPairs.add(_rawOutput.substring(startPos, startPos + 2));
-          }
-          hexResult = hexPairs.join('');
-        } else {
-          // Normal order for HEX
-          final startPos = fbp * 2;
-          final endPos = (lbp + 1) * 2;
-          hexResult = _rawOutput.substring(startPos, endPos);
-        }
-        
-        // Format with spaces every 2 characters
-        final formattedHex = <String>[];
-        for (int i = 0; i < hexResult.length; i += 2) {
-          formattedHex.add(hexResult.substring(i, i + 2));
-        }
-        result = formattedHex.join(' ');
+        // For HEX, use conversion service with byte range and space formatting
+        result = _conversionServices.toFormatedHEXString(_rawOutput, fbp, lbp);
       }
       
       setState(() {

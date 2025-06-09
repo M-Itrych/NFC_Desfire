@@ -66,7 +66,7 @@ class DesfireException implements Exception {
   const DesfireException(this.message, {this.statusCode, this.originalError});
 
   @override
-  String toString() => 'DesfireException: $message${statusCode != null ? ' (Status: $statusCode)' : ''}';
+  String toString() => '$message${statusCode != null ? ' (Status: $statusCode)' : ''}';
 }
 
 // =============================================================================
@@ -265,7 +265,7 @@ class _CryptoNfcServices {
 /// );
 /// ```
 class DesfireNfcServices {
-  static const int _timeout = 10;
+  static const int _timeout = 7;
   static const String _successStatus = '9100';
   static const String _additionalFrameStatus = '91AF';
   
@@ -560,10 +560,10 @@ class DesfireNfcServices {
     
     final (actualOffset, actualLength, shouldReverse) = _calculateReadParameters(offset, length);
     
-    final offsetHex = _to3ByteLEHex(0);
-    final lengthHex = _to3ByteLEHex(16);
+    final offsetHex = _to3ByteLEHex(actualOffset);
+    final lengthHex = _to3ByteLEHex(actualLength + 1);
     final fileIdHex = fileIdInt.toRadixString(16).padLeft(2, '0');
-    
+
     final readCommand = "90BD000007${fileIdHex}${offsetHex}${lengthHex}00";
     _debugPrint("📖 Reading data: $readCommand");
     
@@ -586,9 +586,8 @@ class DesfireNfcServices {
       decryptedData = responseData;
     }
     
-    final hexString = hex.encode(decryptedData).substring(0, 32).toUpperCase();
-    
-    return shouldReverse ? _reverseHexBytes(hexString) : hexString;
+    final hexString = hex.encode(decryptedData).toUpperCase();
+    return hexString;
   }
 
   /// Decrypts file data using session key and CMAC-derived IV.
@@ -613,7 +612,6 @@ class DesfireNfcServices {
   // =============================================================================
   // UTILITY METHODS
   // =============================================================================
-
   /// Safely executes an NFC transceive command with timeout.
   Future<String> _transceiveCommand(String command) async {
     try {
@@ -718,6 +716,7 @@ class DesfireNfcServices {
   /// Calculates read parameters and determines if byte reversal is needed.
   (int offset, int length, bool shouldReverse) _calculateReadParameters(int fbp, int lbp) {
     if (fbp > lbp) {
+      _debugPrint("FBP is greater than LBP, reversing byte order");
       return (lbp, fbp, true);
     } else {
       return (fbp, lbp, false);
@@ -919,6 +918,38 @@ class BinaryConversionServices {
     }
     
     return asciiString.toString();
+  }
+
+  /// Converts hex string to formatted hex string with spaces and byte range extraction.
+  /// 
+  /// [hexString] The hex string to convert (must be valid hex)
+  /// [fbp] First byte position (0-based index)
+  /// [lbp] Last byte position (0-based index)
+  /// 
+  /// Returns formatted hex string with spaces between bytes for the specified byte range.
+  /// If FBP > LBP, bytes are processed in reverse order.
+  /// 
+  /// Throws [ArgumentError] if parameters are invalid.
+  String toFormatedHEXString(String hexString, int fbp, int lbp) {
+    _validateHexString(hexString);
+    _validateBytePositions(hexString, fbp, lbp);
+    
+    final hexPairs = <String>[];
+    final (startPos, endPos, isReversed) = _calculateRange(fbp, lbp);
+    
+    if (isReversed) {
+      for (int i = startPos; i >= endPos; i--) {
+        final byteHex = hexString.substring(i * 2, (i * 2) + 2);
+        hexPairs.add(byteHex.toUpperCase());
+      }
+    } else {
+      for (int i = startPos; i <= endPos; i++) {
+        final byteHex = hexString.substring(i * 2, (i * 2) + 2);
+        hexPairs.add(byteHex.toUpperCase());
+      }
+    }
+    
+    return hexPairs.join(' ');
   }
 
   // =============================================================================
